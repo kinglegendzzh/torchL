@@ -1,0 +1,153 @@
+
+num_epochs = 30
+batch_size = 128 * 8
+GPU
+Epoch 30, Loss: 104.0887
+Total training time: 313.99 seconds.
+低CPU利用，中GPU利用
+
+num_epochs = 30
+batch_size = 128 * 16
+num_workers=4, pin_memory=True
+GPU
+Epoch 30, Loss: 109.2459
+Total training time: 501.33 seconds.
+高CPU利用，峰值型GPU利用率
+
+num_epochs = 30
+batch_size = 128 * 16
+GPU
+Epoch 30, Loss: 109.2978
+Total training time: 276.09 seconds.
+低CPU利用，低GPU利用，GPU峰值使用率18%
+
+num_epochs = 30
+batch_size = 128 * 24
+GPU
+Epoch 30, Loss: 113.8049
+Total training time: 266.54 seconds.
+低CPU利用，低GPU利用，GPU峰值使用率26%
+
+num_epochs = 30
+batch_size = 128 * 40
+GPU
+Epoch 30, Loss: 122.4469
+Total training time: 266.98 seconds.
+低CPU利用，低GPU利用，GPU峰值使用率42%
+
+num_epochs = 30
+batch_size = 128 * 50
+GPU
+Epoch 30, Loss: 128.3609
+Total training time: 235.61 seconds.
+低CPU利用，低GPU利用，GPU峰值使用率45%以上
+
+num_epochs = 30
+batch_size = 128 * 70
+GPU
+pin_memory=True，learning_rate = 0.001
+Epoch 30, Loss: 137.4499
+Total training time: 247.19 seconds.
+效果：十分不理想，过拟合
+pin_memory=True，learning_rate = 0.0211，CosineAnnealingLR(optimizer, T_max=100)
+Epoch 30, Loss: 152.7916
+Total training time: 256.91 seconds.
+效果：十分不错
+低CPU利用，中GPU利用
+
+num_epochs = 30
+batch_size = 128 * 100
+GPU
+Epoch 30, Loss: 153.0844
+Total training time: 241.13 seconds.
+低CPU利用，中GPU利用
+
+num_epochs = 30
+batch_size = 128 * 150
+GPU
+Epoch 30, Loss: 162.9836
+Total training time: 244.91 seconds.
+低CPU利用，中GPU利用
+
+num_epochs = 30
+batch_size = 128 * 200
+GPU
+Epoch 30, Loss: 178.4523
+Total training time: 265.70 seconds.
+低CPU利用，中高GPU利用，GPU温度最高55C
+
+num_epochs = 30
+batch_size = 128 * 300
+GPU
+Epoch 30, Loss: 198.7854
+Total training time: 247.60 seconds.
+低CPU利用，较高GPU利用，GPU温度最高56C
+
+num_epochs = 30
+batch_size = 128 * 350
+GPU
+Epoch 30, Loss: 201.8451
+Total training time: 258.79 seconds.
+低CPU利用，很高GPU利用，GPU温度最高57C，GPU峰值使用率70%
+
+num_workers=2
+num_epochs = 30
+batch_size = 128 * 350
+GPU
+Epoch 30, Loss: 203.3762
+Total training time: 424.01 seconds.
+较高CPU利用，很高GPU利用，GPU温度最高53C
+
+pin_memory=True
+num_epochs = 30
+batch_size = 128 * 350 #会报错
+batch_size = 128 * 200
+GPU
+learning_rate = 0.001
+Epoch 30, Loss: 180.0871
+Total training time: 246.38 seconds.
+效果：很难辨别，过拟合
+learning_rate = 0.01
+Epoch 30, Loss: 157.8040
+Total training time: 239.16 seconds.
+效果：较为模糊，但生成效果很不错
+learning_rate = 0.1
+Epoch 30, Loss: 181.2135
+Total training time: 236.49 seconds.
+效果：很难辨别，欠拟合
+learning_rate = 0.012
+Epoch 30, Loss: 174.1794
+Total training time: 252.49 seconds.
+效果：较为模糊，但生成效果很不错
+learning_rate = 0.05
+Epoch 30, Loss: 175.7178
+Total training time: 252.05 seconds.
+效果：生成效果很不错，但部分图像过于锐利
+learning_rate = 0.008
+Epoch 30, Loss: 151.8935
+Total training time: 249.07 seconds.
+效果：生成效果不错，较为模糊，部分图像过拟合
+learning_rate = 0.018
+Epoch 30, Loss: 174.3077
+Total training time: 241.46 seconds.
+效果：较为模糊，但生成效果很不错
+learning_rate = 0.025
+Epoch 30, Loss: 174.8308
+Total training time: 252.07 seconds.
+效果：生成效果很不错，不算模糊，但是部分图像过于锐利
+已知：0.018偏向模糊、0.025偏锐利
+learning_rate = 0.0211
+Epoch 30, Loss: 174.4427
+Total training time: 251.17 seconds.
+效果：生成效果很不错，不算模糊，但是部分图像过于锐利
+learning_rate = 0.0211
+scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.001)
+Epoch 30, Loss: 184.1963
+Total training time: 250.74 seconds.
+效果：训练循环观察到数据反复横跳；效果不太好，较为模糊
+learning_rate = 0.0211
+scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=100)
+Epoch 30, Loss: 174.7232
+Total training time: 252.37 seconds.
+效果：效果：生成效果很不错，不算模糊，但是部分图像过于锐利
+低CPU利用，较高GPU利用，GPU温度最高53C
