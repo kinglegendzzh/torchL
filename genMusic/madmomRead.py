@@ -1,4 +1,3 @@
-# coding=utf-8
 from madmom.features.beats import RNNBeatProcessor, DBNBeatTrackingProcessor
 from madmom.features.chords import DeepChromaChordRecognitionProcessor
 from madmom.processors import SequentialProcessor
