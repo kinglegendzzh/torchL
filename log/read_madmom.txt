@@ -1,0 +1,663 @@
+原文：
+class Deep Chroma  Chord Recognition Processor(Sequential Processor):
+    """
+    Recognise major and minor chords from deep chroma vectors [1]_ using a
+    Conditional Random Field.
+
+    Parameters
+    ----------
+    model : str
+        File containing the CRF model. If None, use the model supplied with
+        madmom.
+    fps : float
+        Frames per second. Must correspond to the fps of the incoming
+        activations and the model.
+
+    References
+    ----------
+    .. [1] Filip Korzeniowski and Gerhard Widmer,
+           "Feature Learning for Chord Recognition: The Deep Chroma Extractor",
+           Proceedings of the 17th International Society for Music Information
+           Retrieval Conference (ISMIR), 2016.
+
+    Examples
+    --------
+    To recognise chords in an audio file using the
+    DeepChromaChordRecognitionProcessor you first need to create a
+    madmom.audio.chroma.DeepChromaProcessor to extract the appropriate chroma
+    vectors.
+
+    >>> from madmom.audio.chroma import DeepChromaProcessor
+    >>> dcp = DeepChromaProcessor()
+    >>> dcp  # doctest: +ELLIPSIS
+    <madmom.audio.chroma.DeepChromaProcessor object at ...>
+
+    Then, create the DeepChromaChordRecognitionProcessor to decode a chord
+    sequence from the extracted chromas:
+
+    >>> decode = DeepChromaChordRecognitionProcessor()
+    >>> decode  # doctest: +ELLIPSIS
+    <madmom.features.chords.DeepChromaChordRecognitionProcessor object at ...>
+
+    To transcribe the chords, you can either manually call the processors
+    one after another,
+
+    >>> chroma = dcp('tests/data/audio/sample2.wav')
+    >>> decode(chroma)
+    ... # doctest: +NORMALIZE_WHITESPACE +NORMALIZE_ARRAYS
+    array([(0. , 1.6, 'F:maj'), (1.6, 2.5, 'A:maj'), (2.5, 4.1, 'D:maj')],
+          dtype=[('start', '<f8'), ('end', '<f8'), ('label', 'O')])
+
+    or create a `SequentialProcessor` that connects them:
+
+    >>> from madmom.processors import SequentialProcessor
+    >>> chordrec = SequentialProcessor([dcp, decode])
+    >>> chordrec('tests/data/audio/sample2.wav')
+    ... # doctest: +NORMALIZE_WHITESPACE +NORMALIZE_ARRAYS
+    array([(0. , 1.6, 'F:maj'), (1.6, 2.5, 'A:maj'), (2.5, 4.1, 'D:maj')],
+          dtype=[('start', '<f8'), ('end', '<f8'), ('label', 'O')])
+    """
+
+    def __init__(self, model=None, fps=10, **kwargs):
+        from ..ml.crf import ConditionalRandomField
+        from ..models import CHORDS_DCCRF
+        crf = ConditionalRandomField.load(model or CHORDS_DCCRF[0])
+        lbl = partial(majmin_targets_to_chord_labels, fps=fps)
+        super(DeepChromaChordRecognitionProcessor, self).__init__((crf, lbl))
+译文：
+类深色度和弦识别处理器（顺序处理器）：
+     ”“”
+     使用深度色度向量 [1]_ 识别大调和小调和弦
+     条件随机场。
+
+     参数
+     ----------
+     型号：str
+         包含 CRF 模型的文件。 如果没有，请使用随附的型号
+         妈妈。
+     帧率：浮动
+         每秒帧数。 必须对应传入的fps
+         激活和模型。
+
+     参考
+     ----------
+     .. [1] Filip Korzeniowski 和 Gerhard Widmer，
+            “和弦识别的特征学习：深层色度提取器”，
+            第十七届国际音乐信息学会会议记录
+            检索会议（ISMIR），2016。
+
+     例子
+     --------
+     使用以下命令识别音频文件中的和弦
+     DeepChromaChordRecognitionProcessor 首先需要创建一个
+     madmom.audio.chroma.DeepChromaProcessor 提取适当的色度
+     向量。
+
+     >>> 从 madmom.audio.chroma 导入 DeepChromaProcessor
+     >>> dcp = DeepChromaProcessor()
+     >>> dcp # doctest: +省略号
+     <madmom.audio.chroma.DeepChromaProcessor 对象位于 ...>
+
+     然后，创建 DeepChromaChordRecognitionProcessor 来解码和弦
+     提取的色度序列：
+
+     >>> 解码 = DeepChromaChordRecognitionProcessor()
+     >>> 解码 # doctest: +ELLIPSIS
+     <madmom.features.chords.DeepChromaChordRecognitionProcessor 对象位于 ...>
+
+     要转录和弦，您可以手动调用处理器
+     相继，
+
+     >>> 色度 = dcp('测试/数据/音频/sample2.wav')
+     >>> 解码（色度）
+     ... # doctest: +NORMALIZE_WHITESPACE +NORMALIZE_ARRAYS
+     array([(0., 1.6, 'F:maj'), (1.6, 2.5, 'A:maj'), (2.5, 4.1, 'D:maj')],
+           dtype=[('开始', '<f8'), ('结束', '<f8'), ('标签', 'O')])
+
+     或者创建一个连接它们的“SequentialProcessor”：
+
+     >>> 从 madmom.processors 导入 SequentialProcessor
+     >>> cordrec = SequentialProcessor([dcp, 解码])
+     >>> cordrec('测试/数据/音频/sample2.wav')
+     ... # doctest: +NORMALIZE_WHITESPACE +NORMALIZE_ARRAYS
+     array([(0., 1.6, 'F:maj'), (1.6, 2.5, 'A:maj'), (2.5, 4.1, 'D:maj')],
+           dtype=[('开始', '<f8'), ('结束', '<f8'), ('标签', 'O')])
+     ”“”
+
+     def __init__(self, model=None, fps=10, **kwargs):
+         从 ..ml.crf 导入 ConditionalRandomField
+         从 ..models 导入 CHORDS_DCCRF
+         crf = ConditionalRandomField.load（模型或 CHORDS_DCCRF[0]）
+         lbl = 部分(majmin_targets_to_chord_labels, fps=fps)
+         超级（DeepChromaChordRecognitionProcessor，自我）.__init__（（crf，lbl））
+
+原文：
+class CNN Chord Feature Processor(Sequential Processor):
+    """
+    Extract learned features for chord recognition, as described in [1]_.
+
+    References
+    ----------
+    .. [1] Filip Korzeniowski and Gerhard Widmer,
+           "A Fully Convolutional Deep Auditory Model for Musical Chord
+           Recognition",
+           Proceedings of IEEE International Workshop on Machine Learning for
+           Signal Processing (MLSP), 2016.
+
+    Examples
+    --------
+    >>> proc = CNNChordFeatureProcessor()
+    >>> proc  # doctest: +ELLIPSIS
+    <madmom.features.chords.CNNChordFeatureProcessor object at 0x...>
+    >>> features = proc('tests/data/audio/sample2.wav')
+    >>> features.shape
+    (41, 128)
+    >>> features # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
+    array([[0.05798, 0.     , ..., 0.02757, 0.014  ],
+           [0.06604, 0.     , ..., 0.02898, 0.00886],
+           ...,
+           [0.00655, 0.1166 , ..., 0.00651, 0.     ],
+           [0.01476, 0.11185, ..., 0.00287, 0.     ]])
+    """
+
+    def __init__(self, **kwargs):
+        from ..audio.signal import SignalProcessor, FramedSignalProcessor
+        from ..audio.stft import ShortTimeFourierTransformProcessor
+        from ..audio.spectrogram import LogarithmicFilteredSpectrogramProcessor
+        from ..ml.nn import NeuralNetwork
+        from ..models import CHORDS_CNN_FEAT
+
+        # spectrogram computation
+        sig = SignalProcessor(num_channels=1, sample_rate=44100)
+        frames = FramedSignalProcessor(frame_size=8192, fps=10)
+        stft = ShortTimeFourierTransformProcessor()  # caching FFT window
+        spec = LogarithmicFilteredSpectrogramProcessor(
+            num_bands=24, fmin=60, fmax=2600, unique_filters=True
+        )
+
+        # padding, neural network and global average pooling
+        pad = _cnncfp_pad
+        nn = NeuralNetwork.load(CHORDS_CNN_FEAT[0])
+        superframes = _cnncfp_superframes
+        avg = _cnncfp_avg
+
+        # create processing pipeline
+        super(CNNChordFeatureProcessor, self).__init__([
+            sig, frames, stft, spec, pad, nn, superframes, avg
+        ])
+译文：
+CNN 和弦特征处理器（顺序处理器）：
+     ”“”
+     提取学习到的特征以进行和弦识别，如 [1]_ 中所述。
+
+     参考
+     ----------
+     .. [1] Filip Korzeniowski 和 Gerhard Widmer，
+            “音乐和弦的全卷积深度听觉模型
+            认出”，
+            IEEE 国际机器学习研讨会论文集
+            信号处理（MLSP），2016。
+
+     例子
+     --------
+     >>> proc = CNNChordFeatureProcessor()
+     >>> proc # doctest: +省略号
+     <madmom.features.chords.CNNChordFeatureProcessor 对象位于 0x...>
+     >>> 功能 = proc('测试/数据/音频/sample2.wav')
+     >>> 特征.形状
+     (41, 128)
+     >>> 功能 # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
+     数组([[0.05798, 0., ..., 0.02757, 0.014 ],
+            [0.06604, 0., ..., 0.02898, 0.00886],
+            ...,
+            [0.00655, 0.1166, ..., 0.00651, 0.],
+            [0.01476, 0.11185, ..., 0.00287, 0.]])
+     ”“”
+
+     def __init__(self, **kwargs):
+         从 ..audio.signal 导入 SignalProcessor、FramedSignalProcessor
+         从 ..audio.stft 导入 ShortTimeFourierTransformProcessor
+         从 ..audio.spectrogram 导入 LogarithmicFilteredSpectrogramProcessor
+         从 ..ml.nn 导入 NeuralNetwork
+         从 ..models 导入 CHORDS_CNN_FEAT
+
+         # 频谱图计算
+         sig = SignalProcessor(num_channels=1,sample_rate=44100)
+         帧= FramedSignalProcessor（frame_size = 8192，fps = 10）
+         stft = ShortTimeFourierTransformProcessor() # 缓存FFT窗口
+         规格 = LogarithmicFilteredSpectrogramProcessor(
+             num_bands=24，fmin=60，fmax=2600，unique_filters=True
+         ）
+
+         # 填充、神经网络和全局平均池化
+         垫=_cnncfp_pad
+         nn = NeuralNetwork.load(CHORDS_CNN_FEAT[0])
+         超帧 = _cnncfp_superframes
+         平均值 = _cnncfp_avg
+
+         # 创建处理管道
+         超级（CNNChordFeatureProcessor，自我）.__init__（[
+             sig、帧、stft、规格、pad、nn、超帧、avg
+         ]）
+
+
+原文：
+class CRF  ChordRecognition Processor(Sequential Processor):
+    """
+    Recognise major and minor chords from learned features extracted by
+    a convolutional neural network, as described in [1]_.
+
+    Parameters
+    ----------
+    model : str
+        File containing the CRF model. If None, use the model supplied with
+        madmom.
+    fps : float
+        Frames per second. Must correspond to the fps of the incoming
+        activations and the model.
+
+    References
+    ----------
+    .. [1] Filip Korzeniowski and Gerhard Widmer,
+           "A Fully Convolutional Deep Auditory Model for Musical Chord
+           Recognition",
+           Proceedings of IEEE International Workshop on Machine Learning for
+           Signal Processing (MLSP), 2016.
+
+    Examples
+    --------
+    To recognise chords using the CRFChordRecognitionProcessor, you first need
+    to extract features using the CNNChordFeatureProcessor.
+
+    >>> featproc = CNNChordFeatureProcessor()
+    >>> featproc  # doctest: +ELLIPSIS
+    <madmom.features.chords.CNNChordFeatureProcessor object at 0x...>
+
+    Then, create the CRFChordRecognitionProcessor to decode a chord sequence
+    from the extracted features:
+
+    >>> decode = CRFChordRecognitionProcessor()
+    >>> decode  # doctest: +ELLIPSIS
+    <madmom.features.chords.CRFChordRecognitionProcessor object at 0x...>
+
+    To transcribe the chords, you can either manually call the processors
+    one after another,
+
+    >>> feats = featproc('tests/data/audio/sample2.wav')
+    >>> decode(feats)
+    ... # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS +NORMALIZE_ARRAYS
+    array([(0. , 0.2, 'N'), (0.2, 1.6, 'F:maj'),
+           (1.6, 2.4..., 'A:maj'), (2.4..., 4.1, 'D:min')],
+          dtype=[('start', '<f8'), ('end', '<f8'), ('label', 'O')])
+
+    or create a `madmom.processors.SequentialProcessor` that connects them:
+
+    >>> from madmom.processors import SequentialProcessor
+    >>> chordrec = SequentialProcessor([featproc, decode])
+    >>> chordrec('tests/data/audio/sample2.wav')
+    ... # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS +NORMALIZE_ARRAYS
+    array([(0. , 0.2, 'N'), (0.2, 1.6, 'F:maj'),
+           (1.6, 2.4..., 'A:maj'), (2.4..., 4.1, 'D:min')],
+          dtype=[('start', '<f8'), ('end', '<f8'), ('label', 'O')])
+    """
+    def __init__(self, model=None, fps=10, **kwargs):
+        from ..ml.crf import ConditionalRandomField
+        from ..models import CHORDS_CFCRF
+        crf = ConditionalRandomField.load(model or CHORDS_CFCRF[0])
+        lbl = partial(majmin_targets_to_chord_labels, fps=fps)
+        super(CRFChordRecognitionProcessor, self).__init__((crf, lbl))
+译文：
+类 CRF 和弦识别处理器（顺序处理器）：
+     ”“”
+     从提取的学习特征中识别大调和小调和弦
+     卷积神经网络，如 [1]_ 中所述。
+
+     参数
+     ----------
+     型号：str
+         包含 CRF 模型的文件。 如果没有，请使用随附的型号
+         妈妈。
+     帧率：浮动
+         每秒帧数。 必须对应传入的fps
+         激活和模型。
+
+     参考
+     ----------
+     .. [1] Filip Korzeniowski 和 Gerhard Widmer，
+            “音乐和弦的全卷积深度听觉模型
+            认出”，
+            IEEE 国际机器学习研讨会论文集
+            信号处理（MLSP），2016。
+
+     例子
+     --------
+     要使用 CRFChordRecognitionProcessor 识别和弦，您首先需要
+     使用 CNNChordFeatureProcessor 提取特征。
+
+     >>> featproc = CNNChordFeatureProcessor()
+     >>> featproc # doctest: +省略号
+     <madmom.features.chords.CNNChordFeatureProcessor 对象位于 0x...>
+
+     然后，创建 CRFChordRecognitionProcessor 来解码和弦序列
+     从提取的特征中：
+
+     >>> 解码 = CRFChordRecognitionProcessor()
+     >>> 解码 # doctest: +ELLIPSIS
+     <madmom.features.chords.CRFChordRecognitionProcessor 对象位于 0x...>
+
+     要转录和弦，您可以手动调用处理器
+     相继，
+
+     >>> feats = featproc('tests/data/audio/sample2.wav')
+     >>> 解码（壮举）
+     ... # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS +NORMALIZE_ARRAYS
+     数组([(0., 0.2, 'N'), (0.2, 1.6, 'F:maj'),
+            (1.6, 2.4..., 'A:maj'), (2.4..., 4.1, 'D:min')],
+           dtype=[('开始', '<f8'), ('结束', '<f8'), ('标签', 'O')])
+
+     或者创建一个连接它们的“madmom.processors.SequentialProcessor”：
+
+     >>> 从 madmom.processors 导入 SequentialProcessor
+     >>> cordrec = SequentialProcessor([featproc, 解码])
+     >>> cordrec('测试/数据/音频/sample2.wav')
+     ... # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS +NORMALIZE_ARRAYS
+     数组([(0., 0.2, 'N'), (0.2, 1.6, 'F:maj'),
+            (1.6, 2.4..., 'A:maj'), (2.4..., 4.1, 'D:min')],
+           dtype=[('开始', '<f8'), ('结束', '<f8'), ('标签', 'O')])
+     ”“”
+     def __init__(self, model=None, fps=10, **kwargs):
+         从 ..ml.crf 导入 ConditionalRandomField
+         从 ..models 导入 CHORDS_CFCRF
+         crf = ConditionalRandomField.load（模型或 CHORDS_CFCRF[0]）
+         lbl = 部分(majmin_targets_to_chord_labels, fps=fps)
+         超级（CRFChordRecognitionProcessor，自我）.__init__（（crf，lbl））
+
+
+原文：
+# encoding: utf-8
+# pylint: disable=no-member
+# pylint: disable=invalid-name
+# pylint: disable=too-many-arguments
+"""
+This module contains HMM state spaces, transition and observation models used
+for note transcription.
+
+Notes
+-----
+Please note that (almost) everything within this module is discretised to
+integer values because of performance reasons.
+
+"""
+
+from __future__ import absolute_import, division, print_function
+
+import numpy as np
+from madmom.ml.hmm import TransitionModel, ObservationModel
+
+
+class ADSRStateSpace(object):
+    """
+    Map state numbers to actual states.
+
+    State 0 refers to silence, the ADSR states (attack, decay, sustain,
+    release) are numbered from 1 onwards.
+
+    Parameters
+    ----------
+    attack_length : int, optional
+        Length of the attack phase.
+    decay_length : int, optional
+        Length of the decay phase.
+    release_length : int, optional
+        Length of the release phase.
+
+    Sustain phase has no specific minimum length, since self-transitions from
+    this state are used to model the note length.
+
+    """
+
+    def __init__(self, attack_length=1, decay_length=1, release_length=1):
+
+        # define note with states which must be transitioned
+        self.silence = 0
+        self.attack = 1
+        self.decay = self.attack + attack_length
+        self.sustain = self.decay + decay_length
+        self.release = self.sustain + release_length
+
+    @property
+    def num_states(self):
+        return self.release + 1
+
+
+class ADSRTransitionModel(TransitionModel):
+    """
+    Transition model for note transcription with a HMM.
+
+    Parameters
+    ----------
+    state_space : :class:`ADSRStateSpace` instance
+        ADSRStateSpace which maps state numbers to states.
+    onset_prob : float, optional
+        Probability to enter/stay in the attack and decay phase. When entering
+        this phase from a previously sounding note, this probability will be
+        divided by the sum of `onset_prob`, `note_prob`, and `offset_prob`.
+    note_prob : float, optional
+        Probability to enter the sustain phase. Notes can stay in the sustain
+        phase given by this probability divided by the sum of `onset_prob`,
+        `note_prob`, and `offset_prob`.
+    offset_prob : float, optional
+        Probability to enter/stay in the release phase.
+    end_prob : float, optional
+        Probability to go back from release to silence.
+
+    """
+
+    def __init__(self, state_space, onset_prob=0.8, note_prob=0.8,
+                 offset_prob=0.2, end_prob=1.):
+        # save attributes
+        self.state_space = state_space
+        # states
+        silence = state_space.silence
+        attack = state_space.attack
+        decay = state_space.decay
+        sustain = state_space.sustain
+        release = state_space.release
+        # transitions = [(from_state, to_state, prob), ...]
+        # onset phase & min_onset_length
+        t = [(silence, silence, 1. - onset_prob),
+             (silence, attack, onset_prob)]
+        for s in range(attack, decay):
+            t.append((s, silence, 1. - onset_prob))
+            t.append((s, s + 1, onset_prob))
+        # transition to note & min_note_duration
+        for s in range(decay, sustain):
+            t.append((s, silence, 1. - note_prob))
+            t.append((s, s + 1, note_prob))
+        # 3 possibilities to continue note
+        prob_sum = onset_prob + note_prob + offset_prob
+        # 1) sustain note (keep sounding)
+        t.append((sustain, sustain, note_prob / prob_sum))
+        # 2) new note
+        t.append((sustain, attack, onset_prob / prob_sum))
+        # 3) release note (end note)
+        t.append((sustain, sustain + 1, offset_prob / prob_sum))
+        # release phase
+        for s in range(sustain + 1, release):
+            t.append((s, sustain, offset_prob))
+            t.append((s, s + 1, 1. - offset_prob))
+        # after releasing a note, go back to silence or start new note
+        t.append((release, silence, end_prob))
+        t.append((release, release, 1. - end_prob))
+        t = np.array(t)
+        # make the transitions sparse
+        t = self.make_sparse(t[:, 1].astype(int), t[:, 0].astype(int),
+                             t[:, 2])
+        # instantiate a TransitionModel
+        super(ADSRTransitionModel, self).__init__(*t)
+
+
+class ADSRObservationModel(ObservationModel):
+    """
+    Observation model for note transcription tracking with a HMM.
+
+    Parameters
+    ----------
+    state_space : :class:`ADSRStateSpace` instance
+        ADSRStateSpace instance.
+
+    The observed probabilities for note onsets, sounding notes, and offsets are
+    mapped to the states defined in the state space. The observation for
+    'silence' is defined as 1 - p(onset), 'onset' as p(onset), 'decay' and
+    'sustain' as p(note) and 'offset' as p(offset).
+
+    """
+
+    def __init__(self, state_space):
+        # define observation pointers
+        pointers = np.zeros(state_space.num_states, dtype=np.uint32)
+        # map from densiti
+译文：
+# 编码：utf-8
+# pylint: 禁用=无成员
+# pylint: 禁用=无效名称
+# pylint: 禁用=太多参数
+”“”
+该模块包含使用的 HMM 状态空间、转换和观察模型
+用于笔记转录。
+
+笔记
+-----
+请注意，（几乎）该模块中的所有内容都被离散化为
+由于性能原因，整数值。
+
+”“”
+
+从 __future__ 导入绝对导入、除法、打印函数
+
+将 numpy 导入为 np
+从 madmom.ml.hmm 导入 TransitionModel、ObservationModel
+
+
+ADSRStateSpace 类（对象）：
+     ”“”
+     将州号映射到实际州。
+
+     状态 0 表示静音，ADSR 状态（攻击、衰减、维持、
+     版本）从 1 开始编号。
+
+     参数
+     ----------
+     Attack_length：int，可选
+         攻击阶段的长度。
+     Decay_length : int, 可选
+         衰变阶段的长度。
+     release_length ：int，可选
+         发布阶段的长度。
+
+     维持阶段没有特定的最小长度，因为从
+     该状态用于对音符长度进行建模。
+
+     ”“”
+
+     def __init__(自身，attack_length=1，decay_length=1，release_length=1):
+
+         # 定义必须转换的状态的注释
+         自我沉默 = 0
+         自我攻击 = 1
+         self.decay = self.attack +attack_length
+         self.sustain = self.decay + Decay_length
+         self.release = self.sustain + release_length
+
+     @财产
+     def num_states(自身):
+         返回 self.release + 1
+
+
+类 ADSRTransitionModel(TransitionModel)：
+     ”“”
+     使用 HMM 进行音符转录的转换模型。
+
+     参数
+     ----------
+     state_space::class:`ADSRStateSpace` 实例
+         ADSRStateSpace 将状态编号映射到状态。
+     onset_prob ：浮动，可选
+         进入/停留在攻击和衰减阶段的概率。 进入时
+         从先前的声音来看，这个阶段的概率将是
+         除以“onset_prob”、“note_prob”和“offset_prob”的总和。
+     note_prob ：浮点数，可选
+         进入维持阶段的概率。 音符可以保持在延音状态
+         由该概率除以“onset_prob”之和给出的相位，
+         `note_prob` 和 `offset_prob`。
+     offset_prob ：浮点数，可选
+         进入/停留在发布阶段的概率。
+     end_prob ：浮点数，可选
+         从释放回到沉默的可能性。
+
+     ”“”
+
+     def __init__(自身，state_space，onset_prob=0.8，note_prob=0.8，
+                  offset_prob=0.2，end_prob=1。）：
+         # 保存属性
+         self.state_space = 状态空间
+         ＃ 状态
+         沉默 = state_space.silence
+         攻击=状态空间.攻击
+         衰减 = state_space.decay
+         维持=状态空间.维持
+         释放=状态空间.释放
+         # 转换 = [(from_state, to_state, prob), ...]
+         # 起始阶段和最小起始长度
+         t = [(沉默，沉默，1.-onset_prob)，
+              （沉默、攻击、onset_prob）]
+         对于范围内的 s（攻击、衰减）：
+             t.append((s, 沉默, 1.-onset_prob))
+             t.append((s, s + 1, onset_prob))
+         # 转换到 note 和 min_note_duration
+         对于范围内的 s（衰减、维持）：
+             t.append((s, 沉默, 1. - note_prob))
+             t.append((s, s + 1, note_prob))
+         # 继续注意的3种可能性
+         prob_sum = onset_prob + note_prob + offset_prob
+         # 1) 延音（保持发声）
+         t.append((维持、维持、note_prob / prob_sum))
+         # 2) 新笔记
+         t.append((维持、攻击、onset_prob / prob_sum))
+         # 3) 发行说明（尾注）
+         t.append((维持，维持+ 1，offset_prob / prob_sum))
+         # 发布阶段
+         对于范围内的 s（维持 + 1，释放）：
+             t.append((s, 维持, offset_prob))
+             t.append((s, s + 1, 1.-offset_prob))
+         # 发布笔记后，返回静音或开始新笔记
+         t.append((释放、沉默、end_prob))
+         t.append((发布、发布、1.-end_prob))
+         t = np.array(t)
+         # 使过渡稀疏
+         t = self.make_sparse(t[:, 1].astype(int), t[:, 0].astype(int),
+                              t[:, 2])
+         # 实例化一个TransitionModel
+         超级（ADSRTransitionModel，自我）.__init__（*t）
+
+
+类 ADSRObservationModel（观察模型）：
+     ”“”
+     使用 HMM 进行笔记转录跟踪的观察模型。
+
+     参数
+     ----------
+     state_space::class:`ADSRStateSpace` 实例
+         ADSRStateSpace 实例。
+
+     观察到的音符开始、发声音符和偏移的概率为
+     映射到状态空间中定义的状态。 观察结果为
+     'silence' 定义为 1 - p(onset)，'onset' 定义为 p(onset)，'decay' 和
+     “维持”为 p(note)，“偏移”为 p(offset)。
+
+     ”“”
+
+     def __init__(自身，状态空间)：
+         # 定义观察指针
+         指针 = np.zeros(state_space.num_states, dtype=np.uint32)
+         # 密度图
