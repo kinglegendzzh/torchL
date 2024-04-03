@@ -14,17 +14,17 @@ image_size = 784  # 图像尺寸 28x28
 h_dim = 400
 z_dim = 20
 c_dim = 10  # 类别数目（0-9）
-num_epochs = 30
+num_epochs = 60
 batch_size = 128 * 70
-learning_rate = 0.001
+learning_rate = 0.0211
 
 # 数据集加载
 transform = transforms.Compose([
     transforms.ToTensor(),
 ])
 dataset = datasets.MNIST(root='./data', train=True, transform=transform, download=True)
-# data_loader = DataLoader(dataset=dataset, batch_size=batch_size, shuffle=True, pin_memory=True)
-data_loader = DataLoader(dataset=dataset, batch_size=batch_size, shuffle=True)
+data_loader = DataLoader(dataset=dataset, batch_size=batch_size, shuffle=True, pin_memory=True)
+# data_loader = DataLoader(dataset=dataset, batch_size=batch_size, shuffle=True)
 
 
 # 条件变分自编码器 (CVAE) 定义
@@ -67,8 +67,8 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 # device = torch.device("cpu")
 model = CVAE().to(device)
 optimizer = optim.Adam(model.parameters(), lr=learning_rate)
-# scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.001)
-# scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=100)
+# scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.01)
+scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=100)
 epoch_losses = []
 if __name__ == '__main__':
     start_time = time.time()
@@ -95,7 +95,7 @@ if __name__ == '__main__':
             if (idx + 1) % 100 == 0:
                 print(
                     f"Epoch[{epoch + 1}/{num_epochs}], Step [{idx + 1}/{len(data_loader)}], Reconst Loss: {reconst_loss.item()}, KL Div: {kl_div.item()}")
-        # scheduler.step()
+        scheduler.step()
 
         avg_loss = train_loss / len(data_loader.dataset)
         epoch_losses.append(avg_loss)
