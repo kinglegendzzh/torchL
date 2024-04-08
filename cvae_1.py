@@ -15,7 +15,7 @@ h_dim = 400
 z_dim = 20
 c_dim = 10  # 类别数目（0-9）
 num_epochs = 60
-batch_size = 128 * 70
+batch_size = 128 * 350
 learning_rate = 0.0211
 
 # 数据集加载

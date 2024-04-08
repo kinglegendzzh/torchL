@@ -156,10 +156,14 @@ Total training time: 252.37 seconds.
 ------
 num_epochs = 60
 batch_size = 128 * 70
-GPU
+GPU：GTX960
 pin_memory=True，learning_rate = 0.0211，CosineAnnealingLR(optimizer, T_max=100)
 Epoch 60, Loss: 151.0654
 Total training time: 479.04 seconds.
+GPU：GTX4060ti
+num_workers=1，pin_memory=True，learning_rate = 0.0211，CosineAnnealingLR(optimizer, T_max=100)
+Epoch 60, Loss: 151.0499
+Total training time: 286.35 seconds.
 效果：生成效果不错
 
 # num_epochs = 60 //模型崩溃
