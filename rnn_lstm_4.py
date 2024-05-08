@@ -1,9 +1,9 @@
 # 训练模型
 import torch
 
-from torchL.rnn_lstm_1 import tag_to_ix, word_to_ix, training_data
-from torchL.rnn_lstm_2 import LSTMTagger, prepare_sequence
-from torchL.rnn_lstm_3 import model, loss_function, optimizer
+from rnn_lstm_1 import tag_to_ix, word_to_ix, training_data
+from rnn_lstm_2 import LSTMTagger, prepare_sequence
+from rnn_lstm_3 import model, loss_function, optimizer
 
 for epoch in range(400):  # 我们要训练400次。
     for sentence, tags in training_data:
@@ -30,9 +30,9 @@ print(torch.max(tag_scores, 1))
 # 测试模型
 import torch
 
-from torchL.rnn_lstm_1 import testing_data, word_to_ix
-from torchL.rnn_lstm_2 import prepare_sequence
-from torchL.rnn_lstm_3 import model
+from rnn_lstm_1 import testing_data, word_to_ix
+from rnn_lstm_2 import prepare_sequence
+from rnn_lstm_3 import model
 
 test_inputs = prepare_sequence(testing_data[0], word_to_ix)
 tag_scores01 = model(test_inputs)

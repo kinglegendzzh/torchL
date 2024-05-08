@@ -2,8 +2,8 @@
 import torch
 from torch import nn
 
-from torchL.rnn_lstm_1 import tag_to_ix, word_to_ix, training_data
-from torchL.rnn_lstm_2 import LSTMTagger, prepare_sequence
+from rnn_lstm_1 import tag_to_ix, word_to_ix, training_data
+from rnn_lstm_2 import LSTMTagger, prepare_sequence
 
 # 定义几个超参数、实例化模型，选择损失函数、优化器等
 EMBEDDING_DIM = 10

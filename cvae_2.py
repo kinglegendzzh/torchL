@@ -8,7 +8,7 @@ from torchvision.utils import save_image
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 
-from torchL.cvae_1 import model, batch_size, z_dim, device, num_epochs, image_size, data_loader, learning_rate
+from cvae_1 import model, batch_size, z_dim, device, num_epochs, image_size, data_loader, learning_rate
 
 
 # 生成指定数字的图像

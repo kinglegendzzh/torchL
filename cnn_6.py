@@ -4,8 +4,8 @@ import torch.nn.functional as F
 import torch.optim as optim
 from torch import nn
 
-from torchL.cnn_1 import trainloader
-from torchL.cnn_2 import device
+from cnn_1 import trainloader
+from cnn_2 import device
 
 
 class LeNet(nn.Module):

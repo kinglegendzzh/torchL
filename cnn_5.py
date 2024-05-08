@@ -7,7 +7,7 @@ import torch
 import torch.nn as nn
 from torch import tensor
 
-from torchL.cnn_2 import CNNNet
+from cnn_2 import CNNNet
 
 
 # 先定义汇总各层网络参数的函数

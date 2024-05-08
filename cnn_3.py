@@ -4,8 +4,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from torchL.cnn_1 import trainloader
-from torchL.cnn_2 import device, net
+from cnn_1 import trainloader
+from cnn_2 import device, net
 
 if __name__ == '__main__':
     # 选择优化器

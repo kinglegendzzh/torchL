@@ -1,7 +1,7 @@
 import torch
 
-from torchL.cnn_1 import testloader, classes
-from torchL.cnn_2 import net, device
+from cnn_1 import testloader, classes
+from cnn_2 import net, device
 
 if __name__ == '__main__':
     correct = 0

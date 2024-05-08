@@ -1,9 +1,9 @@
 # 测试模型
 import torch
 
-from torchL.rnn_lstm_1 import testing_data, word_to_ix
-from torchL.rnn_lstm_2 import prepare_sequence
-from torchL.rnn_lstm_3 import model
+from rnn_lstm_1 import testing_data, word_to_ix
+from rnn_lstm_2 import prepare_sequence
+from rnn_lstm_3 import model
 
 test_inputs = prepare_sequence(testing_data[0], word_to_ix)
 tag_scores01 = model(test_inputs)

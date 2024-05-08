@@ -8,7 +8,7 @@ from torchvision.utils import save_image
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 
-from torchL.vae_2 import model, batch_size, z_dim, device, num_epochs, image_size, data_loader
+from vae_2 import model, batch_size, z_dim, device, num_epochs, image_size, data_loader
 
 # 加载模型
 model.load_state_dict(torch.load('data/vae/vae' + str(num_epochs) + '.pth'))
