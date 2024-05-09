@@ -4,6 +4,7 @@ import madmom
 import json
 import time
 import os
+import matplotlib.pyplot as plt
 from tqdm import tqdm
 
 
@@ -85,6 +86,52 @@ def processWav(file_path, output_file, overwrite=False):
     def generate_description(styles):
         return f"This audio features a {', '.join(styles)}."
 
+    def frequency_to_midi(frequency):
+        return 69 + 12 * np.log2(frequency / 440.0)
+
+    def midi_to_note_name(midi_number):
+        note_names = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
+        octave = (midi_number // 12) - 1
+        note = note_names[midi_number % 12]
+        return f"{note}{octave}"
+
+    def convert_pitch_sequence(pitch_sequence):
+        note_sequence = []
+        for _, frequency in pitch_sequence:
+            if frequency > 0:
+                midi_note = int(round(frequency_to_midi(frequency)))
+                note_name = midi_to_note_name(midi_note)
+                note_sequence.append(note_name)
+        return note_sequence
+
+    def visualize_pitch_sequence(y, sr, pitch_sequence, note_sequence):
+        note_names = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
+        plt.figure(figsize=(15, 20))
+        plt.subplots_adjust(wspace=1, hspace=0.2)
+
+        plt.subplot(311)
+        chroma = librosa.feature.chroma_cqt(y=y, sr=sr)
+        librosa.display.specshow(chroma, y_axis='chroma', x_axis='time')
+        plt.xlabel('Time')
+        plt.ylabel('Chroma')
+
+        # plt.subplot(312)
+        # librosa.display.waveshow(y, sr=sr)
+        # plt.xlabel('Time (seconds)')
+        # plt.ylabel('Amplitude')
+
+        plt.subplot(313)
+        plt.grid(linewidth=0.5)
+        plt.xticks(range(0, len(note_sequence), 50))
+        plt.yticks(range(1, 13), note_names)
+        note_positions = [i for i, _ in enumerate(note_sequence)]
+        plt.scatter(note_positions, [note_names.index(note[:-1]) + 1 for note in note_sequence], marker="s", s=1,
+                    color="red")
+        plt.xlabel('Time (frames)')
+        plt.ylabel('Notes')
+
+        plt.show()
+
     def load_existing_data(output_file):
         if not os.path.exists(output_file):
             return {}
@@ -99,10 +146,8 @@ def processWav(file_path, output_file, overwrite=False):
             json.dump(data, f, ensure_ascii=False, indent=4)
 
     def start():
-        # 加载现有数据
         existing_data = load_existing_data(output_file)
 
-        # 检查是否已存在数据
         if file_path in existing_data:
             if overwrite:
                 print(f"Overwriting data for {file_path}.")
@@ -110,7 +155,6 @@ def processWav(file_path, output_file, overwrite=False):
                 print(f"Data for {file_path} already exists. Skipping...")
                 return
 
-        # 开始处理
         total_start_time = time.time()
 
         y, sr = load_audio(file_path)
@@ -118,7 +162,6 @@ def processWav(file_path, output_file, overwrite=False):
             print("Skipping processing due to load error.")
             return
 
-        # 使用 tqdm 显示进度条
         with tqdm(total=100, desc="Processing Audio", bar_format="{l_bar}{bar} [time left: {remaining}]") as pbar:
             pitch_times = detect_pitch(y, sr)
             pbar.update(30)
@@ -130,34 +173,30 @@ def processWav(file_path, output_file, overwrite=False):
             pbar.update(10)
 
         description = generate_description(styles)
+        note_sequence = convert_pitch_sequence(pitch_times)
 
-        # 组织数据
         data_entry = {
             "file_path": file_path,
             "labels": ",".join(styles),
             "description": description,
             "pitch_sequence": pitch_times,
             "beat_sequence": beat_times,
-            "chord_sequence": chords
+            "chord_sequence": chords,
+            "note_sequence": note_sequence
         }
 
-        # 更新数据
         existing_data[file_path] = data_entry
-
-        # 保存数据
         save_data(existing_data, output_file)
 
         total_end_time = time.time()
         print(f"Total processing took {total_end_time - total_start_time:.2f} seconds")
 
+        visualize_pitch_sequence(y, sr, pitch_times, note_sequence)
+
     start()
 
 
 def list_audio_data(output_file):
-    """
-    List all audio data entries in the output file.
-    """
-
     def load_existing_data(output_file):
         if not os.path.exists(output_file):
             return {}
@@ -174,10 +213,6 @@ def list_audio_data(output_file):
 
 
 def delete_audio_data(file_path, output_file):
-    """
-    Delete the specified audio data entry from the output file.
-    """
-
     def load_existing_data(output_file):
         if not os.path.exists(output_file):
             return {}
@@ -201,10 +236,6 @@ def delete_audio_data(file_path, output_file):
 
 
 def query_audio_data(file_path, output_file):
-    """
-    Query the specified audio data entry from the output file and return as JSON string.
-    """
-
     def load_existing_data(output_file):
         if not os.path.exists(output_file):
             return {}
