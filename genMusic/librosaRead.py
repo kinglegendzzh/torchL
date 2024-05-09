@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 
 # 加载音频文件
 # filename = 'data/dorianD.mp3'
-filename = 'data/xunzhang.mp3'
+filename = 'musicLab/fromNetEase/xunzhang.mp3'
 y, sr = librosa.load(filename)
 
 # 计算MFCC特征

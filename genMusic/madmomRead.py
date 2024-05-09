@@ -3,7 +3,7 @@ from madmom.features.chords import DeepChromaChordRecognitionProcessor
 from madmom.processors import SequentialProcessor
 from madmom.audio.chroma import DeepChromaProcessor
 
-audio_path = 'wav/dorianD.wav'
+audio_path = 'musicLab/fromMe/dorianD.wav'
 proc = DBNBeatTrackingProcessor(fps=100)
 act = RNNBeatProcessor()(audio_path)
 beats = proc(act)

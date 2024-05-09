@@ -16,7 +16,7 @@ signal = amplitude * np.sin(2 * np.pi * frequency * t)
 
 # 保存为WAV文件
 signal_int16 = np.int16(signal * 32767)  # 转换为16位整数
-write('wav/sine_wave_440Hz.wav', sample_rate, signal_int16)
+write('musicLab/fromMe/sine_wave_440Hz.wav', sample_rate, signal_int16)
 
 # 可视化信号
 plt.plot(t[:1000], signal[:1000])  # 只画出前1000个样本
