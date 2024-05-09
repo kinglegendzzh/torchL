@@ -7,10 +7,27 @@ import os
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 
-
+"""
+代码说明
+音频加载和特征提取：
+load_audio：加载音频。
+detect_pitch：检测音高。
+detect_beats：检测节拍。
+detect_chords：检测和弦。
+音高和音符转换：
+frequency_to_midi 和 midi_to_note_name：将频率转换为 MIDI 编号和音符名称。
+convert_pitch_sequence：转换音高序列。
+节拍分析：
+analyze_rhythm：分析节拍强度和小节结构。
+数据保存与可视化：
+visualize_pitch_sequence：可视化音高、波形、音符序列和节拍强度。
+数据管理：
+load_existing_data 和 save_data：加载和保存数据。
+list_audio_data、delete_audio_data 和 query_audio_data：数据管理接口。
+"""
 def processWav(file_path, output_file, overwrite=False):
     """
-    Process the WAV file to extract pitch, beats, and chords, then save the structured data.
+    Process the WAV file to extract pitch, beats, chords, and rhythmic structure, then save the structured data.
     """
 
     def load_audio(file_path):
@@ -104,31 +121,58 @@ def processWav(file_path, output_file, overwrite=False):
                 note_sequence.append(note_name)
         return note_sequence
 
+    def analyze_rhythm(y, sr, beat_times):
+        onset_env = librosa.onset.onset_strength(y=y, sr=sr)
+        tempo, beats = librosa.beat.beat_track(onset_envelope=onset_env, sr=sr)
+        beat_strength = onset_env[beats]
+        bars = np.arange(0, len(beat_times), 4)  # Assuming 4/4 time signature for bar division
+        rhythm_structure = {
+            'tempo': tempo,
+            'beats': beat_times,
+            'beat_strength': beat_strength.tolist(),
+            'bars': [beat_times[i] for i in bars]  # 使用列表推导来索引
+        }
+        return rhythm_structure
+
     def visualize_pitch_sequence(y, sr, pitch_sequence, note_sequence):
         note_names = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
         plt.figure(figsize=(15, 20))
         plt.subplots_adjust(wspace=1, hspace=0.2)
 
-        plt.subplot(311)
+        plt.subplot(411)
         chroma = librosa.feature.chroma_cqt(y=y, sr=sr)
         librosa.display.specshow(chroma, y_axis='chroma', x_axis='time')
+        plt.title('Chroma Representation')
         plt.xlabel('Time')
         plt.ylabel('Chroma')
 
-        # plt.subplot(312)
+        # plt.subplot(412)
         # librosa.display.waveshow(y, sr=sr)
+        # plt.title('Waveform')
         # plt.xlabel('Time (seconds)')
         # plt.ylabel('Amplitude')
 
-        plt.subplot(313)
-        plt.grid(linewidth=0.5)
-        plt.xticks(range(0, len(note_sequence), 50))
+        plt.subplot(413)
+        plt.grid(True)
+        plt.xticks(range(0, len(note_sequence), max(1, len(note_sequence) // 50)))
         plt.yticks(range(1, 13), note_names)
         note_positions = [i for i, _ in enumerate(note_sequence)]
-        plt.scatter(note_positions, [note_names.index(note[:-1]) + 1 for note in note_sequence], marker="s", s=1,
-                    color="red")
+        note_values = [note_names.index(note[:-1]) + 1 for note in note_sequence if note[:-1] in note_names]
+        plt.scatter(note_positions, note_values, marker="s", s=1, color="red")
+        plt.title('Note Sequence')
         plt.xlabel('Time (frames)')
         plt.ylabel('Notes')
+
+        plt.subplot(414)
+        onset_env = librosa.onset.onset_strength(y=y, sr=sr)
+        times = librosa.times_like(onset_env, sr=sr)
+        plt.plot(times, onset_env, label='Onset Strength')
+        plt.vlines(librosa.frames_to_time(np.arange(len(onset_env))), 0, onset_env.max(), color='r', alpha=0.5,
+                   linestyle='--', label='Beats')
+        plt.title('Rhythm Analysis')
+        plt.xlabel('Time (seconds)')
+        plt.ylabel('Onset Strength')
+        plt.legend()
 
         plt.show()
 
@@ -162,18 +206,20 @@ def processWav(file_path, output_file, overwrite=False):
             print("Skipping processing due to load error.")
             return
 
-        with tqdm(total=100, desc="Processing Audio", bar_format="{l_bar}{bar} [time left: {remaining}]") as pbar:
+        with tqdm(total=100, desc="Processing Audio", bar_format="{l_bar}{bar} [time left: {remaining}]\n") as pbar:
             pitch_times = detect_pitch(y, sr)
-            pbar.update(30)
+            pbar.update(10)
             tempo, beat_times = detect_beats(y, sr)
-            pbar.update(30)
+            pbar.update(10)
             chords = detect_chords(file_path)
             pbar.update(30)
             styles = style_labeling(pitch_times, beat_times, chords)
             pbar.update(10)
-
-        description = generate_description(styles)
-        note_sequence = convert_pitch_sequence(pitch_times)
+            description = generate_description(styles)
+            pbar.update(20)
+            note_sequence = convert_pitch_sequence(pitch_times)
+            pbar.update(20)
+            rhythm_structure = analyze_rhythm(y, sr, beat_times)
 
         data_entry = {
             "file_path": file_path,
@@ -182,7 +228,8 @@ def processWav(file_path, output_file, overwrite=False):
             "pitch_sequence": pitch_times,
             "beat_sequence": beat_times,
             "chord_sequence": chords,
-            "note_sequence": note_sequence
+            "note_sequence": note_sequence,
+            "rhythm_structure": rhythm_structure
         }
 
         existing_data[file_path] = data_entry
