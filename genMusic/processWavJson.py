@@ -8,6 +8,8 @@ import matplotlib.pyplot as plt
 from scipy.signal import find_peaks
 from tqdm import tqdm
 
+from utils.ProcessData import load_existing_data, save_data
+
 """
 代码说明
 音频加载和特征提取：
@@ -26,7 +28,8 @@ visualize_pitch_sequence：可视化音高、波形、音符序列和节拍强�
 load_existing_data 和 save_data：加载和保存数据。
 list_audio_data、delete_audio_data 和 query_audio_data：数据管理接口。
 """
-def processWav(file_path, output_file, overwrite=False):
+
+def processWav(file_path, output_file, overwrite):
     """
     Process the WAV file to extract pitch, beats, chords, and rhythmic structure, then save the structured data.
     """
@@ -133,10 +136,10 @@ def processWav(file_path, output_file, overwrite=False):
             1. **节拍检测**：
                - 使用 `np.diff` 计算节拍间隔。
                - 根据间隔的分布推测最可能的拍号。
-            
+
             2. **节拍结构分析**：
                - `likely_beats_per_bar` 表示每小节的节拍数，根据间隔的分布推断。
-            
+
             3. **可视化**：
                - 在节奏分析中添加推测的拍号信息。
                - 将 `likely_beats_per_bar` 信息显示在图标题中。
@@ -205,19 +208,6 @@ def processWav(file_path, output_file, overwrite=False):
 
         plt.show()
 
-    def load_existing_data(output_file):
-        if not os.path.exists(output_file):
-            return {}
-        with open(output_file, 'r', encoding='utf-8') as f:
-            try:
-                return json.load(f)
-            except json.JSONDecodeError:
-                return {}
-
-    def save_data(data, output_file):
-        with open(output_file, 'w', encoding='utf-8') as f:
-            json.dump(data, f, ensure_ascii=False, indent=4)
-
     def start():
         existing_data = load_existing_data(output_file)
 
@@ -271,37 +261,13 @@ def processWav(file_path, output_file, overwrite=False):
 
     start()
 
-
 def list_audio_data(output_file):
-    def load_existing_data(output_file):
-        if not os.path.exists(output_file):
-            return {}
-        with open(output_file, 'r', encoding='utf-8') as f:
-            try:
-                return json.load(f)
-            except json.JSONDecodeError:
-                return {}
-
     data = load_existing_data(output_file)
     for key, value in data.items():
         print(f"File Path: {key}")
         print(json.dumps(value, ensure_ascii=False, indent=4))
 
-
 def delete_audio_data(file_path, output_file):
-    def load_existing_data(output_file):
-        if not os.path.exists(output_file):
-            return {}
-        with open(output_file, 'r', encoding='utf-8') as f:
-            try:
-                return json.load(f)
-            except json.JSONDecodeError:
-                return {}
-
-    def save_data(data, output_file):
-        with open(output_file, 'w', encoding='utf-8') as f:
-            json.dump(data, f, ensure_ascii=False, indent=4)
-
     data = load_existing_data(output_file)
     if file_path in data:
         del data[file_path]
@@ -310,17 +276,7 @@ def delete_audio_data(file_path, output_file):
     else:
         print(f"No data found for {file_path}")
 
-
 def query_audio_data(file_path, output_file):
-    def load_existing_data(output_file):
-        if not os.path.exists(output_file):
-            return {}
-        with open(output_file, 'r', encoding='utf-8') as f:
-            try:
-                return json.load(f)
-            except json.JSONDecodeError:
-                return {}
-
     data = load_existing_data(output_file)
     if file_path in data:
         return json.dumps(data[file_path], ensure_ascii=False, indent=4)
