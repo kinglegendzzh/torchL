@@ -5,6 +5,7 @@ import json
 import time
 import os
 import matplotlib.pyplot as plt
+from scipy.signal import find_peaks
 from tqdm import tqdm
 
 """
@@ -125,16 +126,44 @@ def processWav(file_path, output_file, overwrite=False):
         onset_env = librosa.onset.onset_strength(y=y, sr=sr)
         tempo, beats = librosa.beat.beat_track(onset_envelope=onset_env, sr=sr)
         beat_strength = onset_env[beats]
-        bars = np.arange(0, len(beat_times), 4)  # Assuming 4/4 time signature for bar division
+        intervals = np.diff(beat_times)
+        avg_interval = np.mean(intervals)
+
+        """
+            1. **节拍检测**：
+               - 使用 `np.diff` 计算节拍间隔。
+               - 根据间隔的分布推测最可能的拍号。
+            
+            2. **节拍结构分析**：
+               - `likely_beats_per_bar` 表示每小节的节拍数，根据间隔的分布推断。
+            
+            3. **可视化**：
+               - 在节奏分析中添加推测的拍号信息。
+               - 将 `likely_beats_per_bar` 信息显示在图标题中。
+        """
+        # Analyze intervals to determine likely time signatures
+        counts, bins = np.histogram(intervals, bins=np.linspace(0, max(intervals), num=50))
+        peaks, _ = find_peaks(counts, height=np.max(counts) * 0.5)
+        likely_beats_per_bar = bins[peaks].astype(int)
+
+        # Ensure common_beat_interval is not zero or very small
+        if len(likely_beats_per_bar) > 0 and np.max(likely_beats_per_bar) > 0:
+            common_beat_interval = max(likely_beats_per_bar[0], 1)
+            bars = np.arange(0, min(len(beat_times), 1000), common_beat_interval)
+        else:
+            common_beat_interval = 4  # Fallback to 4/4
+            bars = np.arange(0, min(len(beat_times), 1000), common_beat_interval)
+
         rhythm_structure = {
             'tempo': tempo,
             'beats': beat_times,
             'beat_strength': beat_strength.tolist(),
-            'bars': [beat_times[i] for i in bars]  # 使用列表推导来索引
+            'bars': [beat_times[i] for i in bars],  # 使用列表推导来索引
+            'likely_beats_per_bar': common_beat_interval
         }
         return rhythm_structure
 
-    def visualize_pitch_sequence(y, sr, pitch_sequence, note_sequence):
+    def visualize_pitch_sequence(y, sr, pitch_sequence, note_sequence, rhythm_structure):
         note_names = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
         plt.figure(figsize=(15, 20))
         plt.subplots_adjust(wspace=1, hspace=0.2)
@@ -169,7 +198,7 @@ def processWav(file_path, output_file, overwrite=False):
         plt.plot(times, onset_env, label='Onset Strength')
         plt.vlines(librosa.frames_to_time(np.arange(len(onset_env))), 0, onset_env.max(), color='r', alpha=0.5,
                    linestyle='--', label='Beats')
-        plt.title('Rhythm Analysis')
+        plt.title(f'Rhythm Analysis - Likely {rhythm_structure["likely_beats_per_bar"]}/4 Time')
         plt.xlabel('Time (seconds)')
         plt.ylabel('Onset Strength')
         plt.legend()
@@ -238,7 +267,7 @@ def processWav(file_path, output_file, overwrite=False):
         total_end_time = time.time()
         print(f"Total processing took {total_end_time - total_start_time:.2f} seconds")
 
-        visualize_pitch_sequence(y, sr, pitch_times, note_sequence)
+        visualize_pitch_sequence(y, sr, pitch_times, note_sequence, rhythm_structure)
 
     start()
 
