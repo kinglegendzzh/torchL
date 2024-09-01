@@ -1,5 +1,5 @@
 import os
-
+# 目前M1芯片无法运行此python脚本，是由于spleeter库不兼容导致的。
 # os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
 
 import librosa
